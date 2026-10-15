@@ -1,0 +1,44 @@
+[
+  {
+    "message_id": 2,
+    "date": "2026-10-15T04:12:38+00:00",
+    "text": "Con el gesture handler de alejar o acercar con los dedos imitar estos botones",
+    "image": "images/msg-002 (1).jpg"
+  },
+  {
+    "message_id": 3,
+    "date": "2026-10-15T04:13:39+00:00",
+    "text": "Este espacio queda vacio siempre es mejor quitarlo y que la linea de tiempo ocupe ese espacio",
+    "image": "images/msg-003 (2).jpg"
+  },
+  {
+    "message_id": 4,
+    "date": "2026-10-15T04:14:23+00:00",
+    "text": "Quedan restos de ingles",
+    "image": "images/msg-004 (2).jpg"
+  },
+  {
+    "message_id": 5,
+    "date": "2026-10-15T04:15:03+00:00",
+    "text": "Esta pantalla no respeta el safe area",
+    "image": "images/msg-005 (2).jpg"
+  },
+  {
+    "message_id": 6,
+    "date": "2026-10-15T04:15:45+00:00",
+    "text": "Los botones salen de las cajas",
+    "image": "images/msg-006 (2).jpg"
+  },
+  {
+    "message_id": 7,
+    "date": "2026-10-15T04:16:43+00:00",
+    "text": "En transcripcion tambien",
+    "image": "images/msg-007 (2).jpg"
+  },
+  {
+    "message_id": 8,
+    "date": "2026-10-15T04:17:45+00:00",
+    "text": "Aqui se ve algo raro tambien pienso que deberia haber un scroll horizontal",
+    "image": "images/msg-008 (3).jpg"
+  }
+]
