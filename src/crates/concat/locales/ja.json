@@ -551,6 +551,8 @@
   "export.browse": "参照",
   "export.cancelExport": "書き出しをキャンセル",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "コーデック",
   "export.colour": "カラー",
   "export.contents": "内容",

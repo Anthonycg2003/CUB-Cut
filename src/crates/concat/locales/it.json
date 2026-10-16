@@ -551,6 +551,8 @@
   "export.browse": "Sfoglia",
   "export.cancelExport": "Annulla esportazione",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "Codec",
   "export.colour": "Colore",
   "export.contents": "Contenuto",

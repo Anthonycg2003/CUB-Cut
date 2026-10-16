@@ -551,6 +551,8 @@
   "export.browse": "เรียกดู",
   "export.cancelExport": "ยกเลิกการส่งออก",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "โคเดก",
   "export.colour": "สี",
   "export.contents": "เนื้อหา",

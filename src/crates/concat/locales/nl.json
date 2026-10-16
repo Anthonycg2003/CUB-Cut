@@ -551,6 +551,8 @@
   "export.browse": "Bladeren",
   "export.cancelExport": "Export annuleren",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "Codec",
   "export.colour": "Kleur",
   "export.contents": "Inhoud",

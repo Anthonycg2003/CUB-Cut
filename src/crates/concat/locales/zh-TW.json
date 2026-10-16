@@ -551,6 +551,8 @@
   "export.browse": "瀏覽",
   "export.cancelExport": "取消匯出",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "編碼格式",
   "export.colour": "顏色",
   "export.contents": "目錄",

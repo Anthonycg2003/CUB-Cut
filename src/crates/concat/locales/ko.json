@@ -551,6 +551,8 @@
   "export.browse": "찾아보기",
   "export.cancelExport": "내보내기 취소",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "코덱",
   "export.colour": "색상",
   "export.contents": "내용",

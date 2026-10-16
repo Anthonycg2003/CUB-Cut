@@ -551,6 +551,8 @@
   "export.browse": "استعراض",
   "export.cancelExport": "إلغاء التصدير",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "الترميز",
   "export.colour": "اللون",
   "export.contents": "المحتويات",

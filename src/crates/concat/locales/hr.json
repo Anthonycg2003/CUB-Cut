@@ -551,6 +551,8 @@
   "export.browse": "Pregledaj",
   "export.cancelExport": "Prekini izvoz",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "Kodek",
   "export.colour": "Boja",
   "export.contents": "Sadržaj",

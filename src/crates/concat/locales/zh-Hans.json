@@ -551,6 +551,8 @@
   "export.browse": "浏览",
   "export.cancelExport": "取消导出",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "编码器",
   "export.colour": "颜色",
   "export.contents": "目录",

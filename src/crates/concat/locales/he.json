@@ -551,6 +551,8 @@
   "export.browse": "עיון",
   "export.cancelExport": "ביטול הייצוא",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "מקודד",
   "export.colour": "צבע",
   "export.contents": "תוכן",
