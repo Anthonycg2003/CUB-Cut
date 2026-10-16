@@ -363,6 +363,11 @@ component ChipRow inherits Rectangle {
     /// lays them in rows of equal cells, so the ladder reads as a keypad
     /// rather than as a line that runs off the sheet.
     in property <int> per-row: 0;
+    /// The width the chips take at their own size, gaps included, or
+    /// zero when they are laid in rows. A row that scrolls reads this
+    /// rather than the width it was given: it is the layout's preferred
+    /// width, which does not depend on that.
+    out property <length> natural-width: root.per-row == 0 ? line.preferred-width : 0px;
 
     callback changed(index: int);
 
@@ -405,7 +410,14 @@ component ChipRow inherits Rectangle {
         }
     }
 
-    if root.per-row == 0: HorizontalLayout {
+    // Not inside `if`: a row that scrolls has to read this layout's
+    // preferred width, and an id declared in a condition cannot be
+    // read from outside it. When the chips are laid in rows the grid
+    // below is the one on screen, and this line is only the measure.
+    line := HorizontalLayout {
+        visible: root.per-row == 0;
+        y: 0;
+        height: root.per-row == 0 ? root.chip-h : 0px;
         alignment: root.block ? LayoutAlignment.stretch : LayoutAlignment.start;
         spacing: root.gap;
 
@@ -1368,20 +1380,40 @@ export component NewProjectDialog inherits Modal {
             VerticalLayout {
                 spacing: 10px;
 
+                // The sizes keep the width their words need, and what does
+                // not fit slides. Stretching them (`block`) is what cut 4K
+                // in half and left the custom chip off the edge of a phone,
+                // and the readout was sharing that same line. On a phone it
+                // sits under the row, where the whole of it can be read.
+                // Wide, it stays at the end of the line.
+                //
+                // A tap still selects. The flick takes the pointer only once
+                // the drag has moved far enough to be one, and only along
+                // the axis the chips overflow — a press and release lands
+                // on the chip, the same way a row in the select list does.
                 HorizontalLayout {
                     spacing: 16px;
 
-                    ChipRow {
+                    size-flick := Flickable {
                         horizontal-stretch: 1;
-                        options: root.sizes;
-                        extra: I18n.t("common.custom");
-                        current: root.data.size;
-                        enabled: !root.data.busy;
-                        block: root.narrow;
-                        changed(index) => { root.size-changed(index); }
+                        height: size-row.height;
+                        content-width: Math.max(self.width, size-row.natural-width);
+                        content-height: size-row.height;
+                        interactive: size-row.natural-width > self.width;
+
+                        size-row := ChipRow {
+                            x: 0;
+                            y: 0;
+                            width: self.natural-width;
+                            options: root.sizes;
+                            extra: I18n.t("common.custom");
+                            current: root.data.size;
+                            enabled: !root.data.busy;
+                            changed(index) => { root.size-changed(index); }
+                        }
                     }
 
-                    VerticalLayout {
+                    if !root.narrow: VerticalLayout {
                         alignment: center;
                         horizontal-stretch: 0;
                         Text {
@@ -1391,6 +1423,13 @@ export component NewProjectDialog inherits Modal {
                             font-size: Theme.fs-sm;
                         }
                     }
+                }
+
+                if root.narrow: Text {
+                    text: root.data.size-readout;
+                    color: Theme.fg-dim;
+                    font-family: Theme.font-technical;
+                    font-size: Theme.fs-sm;
                 }
 
                 // The typed frame: width by height, each side even and
