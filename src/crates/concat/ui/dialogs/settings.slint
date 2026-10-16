@@ -110,6 +110,12 @@ component Pips inherits HorizontalLayout {
 
 component ModelRow inherits Rectangle {
     in property <ModelData> model;
+    /// The card has the page's width, and on a phone the column of pages
+    /// sits beside it, so that width is a narrow one. The pips and the
+    /// size then leave the line the button is on. Kept there, the line is
+    /// wider than the card, and the sheet clips whatever runs past the
+    /// card — the button's label.
+    in property <bool> narrow;
 
     callback activated();
     callback download();
@@ -140,112 +146,175 @@ component ModelRow inherits Rectangle {
         padding: 10px;
         spacing: 8px;
 
-        HorizontalLayout {
-            spacing: 10px;
+        // The button's line, and — on a narrow card — the facts under
+        // it, at the same 2px the name and the note keep on a wide one.
+        VerticalLayout {
+            spacing: 2px;
 
-            // The radio. A ring that thickens into a filled dot when this is
-            // the model in use, dimmer again when the model is not even here —
-            // three states in one mark, which is what lets the row say what it
-            // is without a word of it.
-            VerticalLayout {
-                alignment: start;
-                padding-top: 2px;
-                Rectangle {
-                    width: 16px;
-                    height: 16px;
-                    border-radius: 8px;
-                    border-width: root.model.active ? 5px : 1.5px;
-                    border-color: root.model.active ? Theme.accent
-                        : root.model.installed ? Theme.line-strong
-                        : Theme.field-active;
+            HorizontalLayout {
+                // The card's width, not the sum of what the line holds. The
+                // name column's minimum is nothing, so a long name elides,
+                // and the button keeps the width its label asks for.
+                width: 100%;
+                spacing: 10px;
 
-                    animate border-width, border-color {
-                        duration: 120ms;
-                        easing: cubic-bezier(0.4, 0, 0.2, 1);
-                    }
-                }
-            }
+                // The radio. A ring that thickens into a filled dot when this is
+                // the model in use, dimmer again when the model is not even here —
+                // three states in one mark, which is what lets the row say what it
+                // is without a word of it. On a narrow card the line is one row
+                // tall, the button's height, so the ring sits in the middle of
+                // it rather than on a first line that is not there.
+                VerticalLayout {
+                    alignment: root.narrow ? center : start;
+                    padding-top: root.narrow ? 0px : 2px;
+                    Rectangle {
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 8px;
+                        border-width: root.model.active ? 5px : 1.5px;
+                        border-color: root.model.active ? Theme.accent
+                            : root.model.installed ? Theme.line-strong
+                            : Theme.field-active;
 
-            VerticalLayout {
-                horizontal-stretch: 1;
-                spacing: 2px;
-
-                HorizontalLayout {
-                    spacing: 6px;
-                    alignment: start;
-
-                    Text {
-                        text: root.model.name;
-                        color: Theme.fg;
-                        font-size: Theme.fs;
-                        font-weight: Theme.weight-title;
-                        vertical-alignment: center;
-                        overflow: elide;
-                    }
-
-                    if root.model.active: Rectangle {
-                        width: badge.width + 12px;
-                        height: 15px;
-                        border-radius: 7.5px;
-                        background: Theme.accent;
-
-                        badge := Text {
-                            x: (parent.width - self.width) / 2;
-                            y: (parent.height - self.height) / 2;
-                            text: I18n.t("settings.inUse");
-                            color: Theme.on-accent;
-                            font-size: Theme.fs-xs;
-                            font-weight: Theme.weight-display;
+                        animate border-width, border-color {
+                            duration: 120ms;
+                            easing: cubic-bezier(0.4, 0, 0.2, 1);
                         }
                     }
                 }
 
+                // Minimum nothing, so the column elides instead of holding
+                // the line open. On a wide card the extra width is this
+                // column's, and the name still has it.
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    min-width: 0px;
+                    spacing: 2px;
+                    alignment: root.narrow ? center : stretch;
+
+                    HorizontalLayout {
+                        spacing: 6px;
+                        alignment: start;
+
+                        Text {
+                            text: root.model.name;
+                            color: Theme.fg;
+                            font-size: Theme.fs;
+                            font-weight: Theme.weight-title;
+                            vertical-alignment: center;
+                            overflow: elide;
+                            min-width: 0px;
+                        }
+
+                        if root.model.active: Rectangle {
+                            width: badge.width + 12px;
+                            height: 15px;
+                            border-radius: 7.5px;
+                            background: Theme.accent;
+
+                            badge := Text {
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                                text: I18n.t("settings.inUse");
+                                color: Theme.on-accent;
+                                font-size: Theme.fs-xs;
+                                font-weight: Theme.weight-display;
+                            }
+                        }
+                    }
+
+                    // On a narrow card the note shares the line under this
+                    // one with the size. Beside the button it is one more
+                    // width the label cannot spare.
+                    if !root.narrow: Text {
+                        text: root.model.note;
+                        color: Theme.fg-muted;
+                        font-size: Theme.fs-sm;
+                        overflow: elide;
+                    }
+                }
+
+                if !root.narrow: VerticalLayout {
+                    alignment: center;
+                    Pips { value: root.model.accuracy; }
+                }
+
+                if !root.narrow: VerticalLayout {
+                    alignment: center;
+                    Text {
+                        text: root.model.size;
+                        color: Theme.fg-dim;
+                        font-family: Theme.font-technical;
+                        font-size: Theme.fs-sm;
+                    }
+                }
+
+                // Stretch nothing: the label sets the width, and a share of
+                // the line would only shrink the words.
+                VerticalLayout {
+                    alignment: center;
+                    horizontal-stretch: 0;
+
+                    if root.model.downloading: Button {
+                        horizontal-stretch: 0;
+                        label: I18n.t("common.cancel");
+                        glyph: Glyph.close;
+                        ghost: true;
+                        clicked => { root.cancel(); }
+                    }
+
+                    if !root.model.downloading && root.model.installed: Button {
+                        horizontal-stretch: 0;
+                        label: I18n.t("common.remove");
+                        glyph: Glyph.trash;
+                        danger: true;
+                        clicked => { root.remove(); }
+                    }
+
+                    if !root.model.downloading && !root.model.installed: Button {
+                        horizontal-stretch: 0;
+                        label: I18n.t("settings.download");
+                        glyph: Glyph.import;
+                        clicked => { root.download(); }
+                    }
+                }
+            }
+
+            // Pips, size and the note, under the name. The blank at the
+            // start is the radio's width, so the line begins where the
+            // name does. The note elides; the size and the pips do not,
+            // and none of them shares the button's line.
+            if root.narrow: HorizontalLayout {
+                width: 100%;
+                spacing: 10px;
+                alignment: start;
+
+                Rectangle { width: 16px; }
+
+                VerticalLayout {
+                    alignment: center;
+                    Pips { value: root.model.accuracy; }
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    Text {
+                        text: root.model.size;
+                        color: Theme.fg-dim;
+                        font-family: Theme.font-technical;
+                        font-size: Theme.fs-sm;
+                    }
+                }
+
                 Text {
+                    horizontal-stretch: 1;
+                    min-width: 0px;
                     text: root.model.note;
                     color: Theme.fg-muted;
                     font-size: Theme.fs-sm;
+                    vertical-alignment: center;
                     overflow: elide;
                 }
-            }
-
-            VerticalLayout {
-                alignment: center;
-                Pips { value: root.model.accuracy; }
-            }
-
-            VerticalLayout {
-                alignment: center;
-                Text {
-                    text: root.model.size;
-                    color: Theme.fg-dim;
-                    font-family: Theme.font-technical;
-                    font-size: Theme.fs-sm;
-                }
-            }
-
-            VerticalLayout {
-                alignment: center;
-
-                if root.model.downloading: Button {
-                    label: I18n.t("common.cancel");
-                    glyph: Glyph.close;
-                    ghost: true;
-                    clicked => { root.cancel(); }
-                }
-
-                if !root.model.downloading && root.model.installed: Button {
-                    label: I18n.t("common.remove");
-                    glyph: Glyph.trash;
-                    danger: true;
-                    clicked => { root.remove(); }
-                }
-
-                if !root.model.downloading && !root.model.installed: Button {
-                    label: I18n.t("settings.download");
-                    glyph: Glyph.import;
-                    clicked => { root.download(); }
-                }
-
             }
         }
 
@@ -910,6 +979,7 @@ export component SettingsDialog inherits Modal {
 
                     for model in root.transcribers: ModelRow {
                         model: model;
+                        narrow: root.phone;
                         activated => { root.model-activated(model.id); }
                         download => { root.model-download(model.id); }
                         cancel => { root.model-cancel(model.id); }
@@ -951,6 +1021,7 @@ export component SettingsDialog inherits Modal {
 
                     for model in root.voices: ModelRow {
                         model: model;
+                        narrow: root.phone;
                         activated => { root.model-activated(model.id); }
                         download => { root.model-download(model.id); }
                         cancel => { root.model-cancel(model.id); }
