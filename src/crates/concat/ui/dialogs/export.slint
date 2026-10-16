@@ -693,6 +693,13 @@ export component ExportDialog inherits Rectangle {
     in property <ExportData> data;
     /// A finger drives it: the body scrolls under a drag as well as a wheel.
     in property <bool> phone;
+    // How far the system's bars reach in. The panel is drawn edge to
+    // edge under them; the header, the body and the footer sit inside.
+    // Zero on a desktop, where the sheet is unchanged.
+    in property <length> inset-top;
+    in property <length> inset-right;
+    in property <length> inset-bottom;
+    in property <length> inset-left;
     /// The monitor's frame and where the playhead is, for the preview
     /// group; a scrub there seeks the cut.
     in property <image> preview-frame;
@@ -749,8 +756,13 @@ export component ExportDialog inherits Rectangle {
 
         VerticalLayout {
             // ── the header ───────────────────────────────────────────────
+            // 52px of title, and above that whatever the status bar
+            // covers. The band is inset from the sides the same way, so a
+            // cutout does not sit on the close. The hairline still runs
+            // the full width: the panel is painted edge to edge under the
+            // bars.
             Rectangle {
-                height: 52px;
+                height: 52px + root.inset-top;
 
                 Rectangle {
                     x: 0;
@@ -760,63 +772,70 @@ export component ExportDialog inherits Rectangle {
                     background: Theme.line;
                 }
 
-                // The close on the trailing edge and the title centred
-                // against the whole strip. Nothing on the leading edge:
-                // that corner is the window's traffic lights on a Mac, and
-                // the format is in the Summary anyway.
-                HorizontalLayout {
-                    padding-left: Theme.pad;
-                    padding-right: 12px;
-                    spacing: 8px;
+                Rectangle {
+                    x: root.inset-left;
+                    y: root.inset-top;
+                    width: parent.width - root.inset-left - root.inset-right;
+                    height: 52px;
 
-                    Rectangle { horizontal-stretch: 1; }
+                    // The close on the trailing edge and the title centred
+                    // against the whole strip. Nothing on the leading edge:
+                    // that corner is the window's traffic lights on a Mac, and
+                    // the format is in the Summary anyway.
+                    HorizontalLayout {
+                        padding-left: Theme.pad;
+                        padding-right: 12px;
+                        spacing: 8px;
 
-                    // Gone, not disabled, while a job is running: there is
-                    // no safe answer to pressing it, so it should not be
-                    // there to press. It points down, the way the sheet
-                    // leaves.
-                    if !root.running: VerticalLayout {
-                        alignment: center;
-                        Rectangle {
-                            width: 32px;
-                            height: 32px;
-                            border-radius: Theme.r-sm;
-                            background: shut.has-hover ? Theme.field : Colors.transparent;
+                        Rectangle { horizontal-stretch: 1; }
 
-                            Icon {
-                                x: (parent.width - self.width) / 2;
-                                y: (parent.height - self.height) / 2;
-                                glyph: Glyph.close;
-                                size: 14px;
-                                tint: shut.has-hover ? Theme.fg : Theme.fg-muted;
-                            }
+                        // Gone, not disabled, while a job is running: there is
+                        // no safe answer to pressing it, so it should not be
+                        // there to press. It points down, the way the sheet
+                        // leaves.
+                        if !root.running: VerticalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 32px;
+                                height: 32px;
+                                border-radius: Theme.r-sm;
+                                background: shut.has-hover ? Theme.field : Colors.transparent;
 
-                            shut := TouchArea {
-                                mouse-cursor: pointer;
-                                clicked => { root.closed(); }
+                                Icon {
+                                    x: (parent.width - self.width) / 2;
+                                    y: (parent.height - self.height) / 2;
+                                    glyph: Glyph.close;
+                                    size: 14px;
+                                    tint: shut.has-hover ? Theme.fg : Theme.fg-muted;
+                                }
+
+                                shut := TouchArea {
+                                    mouse-cursor: pointer;
+                                    clicked => { root.closed(); }
+                                }
                             }
                         }
                     }
-                }
 
-                HorizontalLayout {
-                    x: (parent.width - self.preferred-width) / 2;
-                    y: 0;
-                    width: self.preferred-width;
-                    height: parent.height;
-                    spacing: 8px;
+                    HorizontalLayout {
+                        x: (parent.width - self.preferred-width) / 2;
+                        y: 0;
+                        width: self.preferred-width;
+                        height: parent.height;
+                        spacing: 8px;
 
-                    VerticalLayout {
-                        alignment: center;
-                        Icon { glyph: Glyph.export; size: 16px; tint: Theme.accent; }
-                    }
+                        VerticalLayout {
+                            alignment: center;
+                            Icon { glyph: Glyph.export; size: 16px; tint: Theme.accent; }
+                        }
 
-                    Text {
-                        text: I18n.t("common.export");
-                        color: Theme.fg;
-                        font-size: Theme.fs-lg;
-                        font-weight: Theme.weight-title;
-                        vertical-alignment: center;
+                        Text {
+                            text: I18n.t("common.export");
+                            color: Theme.fg;
+                            font-size: Theme.fs-lg;
+                            font-weight: Theme.weight-title;
+                            vertical-alignment: center;
+                        }
                     }
                 }
             }
@@ -829,6 +848,11 @@ export component ExportDialog inherits Rectangle {
                 Measure {
                     padding-top: 8px;
                     padding-bottom: 16px;
+                    // A side cutout, when there is one. Zero wherever the
+                    // window reports none, which is a desktop and a phone
+                    // held upright.
+                    padding-left: root.inset-left;
+                    padding-right: root.inset-right;
 
                     if root.running || root.columns == 1: VerticalLayout {
                         SummarySection { first: true; data: root.data; }
@@ -981,9 +1005,14 @@ export component ExportDialog inherits Rectangle {
                 background: Theme.line;
             }
 
-            // The groups pad themselves; the footer is padded to match.
+            // The groups pad themselves; the footer is padded to match,
+            // and further by whatever the navigation bar covers, so the
+            // button clears it. The panel keeps painting behind that bar.
             Measure {
-                padding: 14px;
+                padding-top: 14px;
+                padding-bottom: 14px + root.inset-bottom;
+                padding-left: 14px + root.inset-left;
+                padding-right: 14px + root.inset-right;
 
                 ExportFooter {
                     data: root.data;

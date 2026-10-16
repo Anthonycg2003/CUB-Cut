@@ -704,6 +704,14 @@ export component App inherits Window {
         width: root.width;
         height: root.height;
         phone: root.phone;
+        // A full-window sheet, so the padding on the editor never
+        // reaches it. The panel stays edge to edge; these keep the
+        // header, the body and the footer inside the system's bars.
+        // Zero on a desktop.
+        inset-top: root.safe-area-insets.top;
+        inset-right: root.safe-area-insets.right;
+        inset-bottom: root.safe-area-insets.bottom;
+        inset-left: root.safe-area-insets.left;
         data: root.export;
         preview-frame: Editor.preview-frame;
         playhead: Editor.playhead;
