@@ -31,7 +31,7 @@ import { PhoneSheet } from "sheet.slint";
 // Top to bottom:
 //
 //   - a bar with the way out, the project's name, Settings and Export;
-//   - the monitor, which takes whatever height the rest leaves;
+//   - the monitor, as tall as the frame it is showing;
 //   - the transport: where the playhead is, Play, undo and redo;
 //   - the lanes, with the playhead held at their middle and the cut
 //     sliding under it - a drag scrubs, a tap on a clip selects it, a
@@ -258,17 +258,37 @@ export component PhoneEditor inherits Rectangle {
 
     background: Theme.page;
 
-    // Placed rather than laid out. The lanes take a share of the screen's
-    // height, and a layout that read the height of the thing it is sizing
-    // is a binding loop - the launch screen has the same note. Five rows,
-    // each at a height of its own: the bar and the lanes are measured up
-    // from the foot, the top bar and the transport down from the head, and
-    // the monitor is what is left between.
+    // Placed rather than laid out. A layout that read the height of the
+    // thing it is sizing is a binding loop - the launch screen has the
+    // same note. Five rows, each at a height of its own: the bar and the
+    // lanes are measured up from the foot, the top bar and the transport
+    // down from the head. The monitor is only as tall as the frame it
+    // shows, and the lanes take the height a letterboxed picture used to
+    // leave empty.
     property <length> top-h: 48px;
     property <length> transport-h: 60px;
-    /// A third of the screen, and never less than a ruler and two lanes.
-    property <length> lanes-h: Math.max(170px, root.height * 0.3);
     property <length> bar-h: 74px;
+    /// The screen, less the three bars, which keep the height they have.
+    property <length> body-h: Math.max(0px, root.height - root.top-h - root.transport-h - root.bar-h);
+    /// The pane's width: 8px of the ground either side.
+    property <length> monitor-w: Math.max(0px, root.width - 16px);
+    /// The frame's width over its height. A zero output is the 16:9 the
+    /// preview assumes, so nothing divides by zero.
+    property <float> frame-aspect: Editor.output-width > 0 && Editor.output-height > 0
+        ? Editor.output-width / Editor.output-height : 16 / 9;
+    /// The frame fitted across the pane, plus a little air so the card
+    /// does not sit on the transport.
+    property <length> monitor-ideal: root.monitor-w / root.frame-aspect + 8px;
+    /// Whatever the frame does not use, and never less than a ruler and
+    /// two lanes. The height on offer is the screen less the top bar, the
+    /// transport and the tool bar. The monitor takes the frame fitted to
+    /// its pane - the page, inset 8px either side - plus 8px of air so
+    /// the card does not sit on the transport, and it stops once the
+    /// lanes would fall under that floor of 170px. A landscape frame is
+    /// short, so the lanes grow into the band letterboxing used to leave;
+    /// a portrait frame is taller than the body can spare, and the lanes
+    /// keep the floor while the monitor takes what remains.
+    property <length> lanes-h: Math.min(root.body-h, Math.max(170px, root.body-h - root.monitor-ideal));
     property <length> lanes-y: root.height - root.bar-h - root.lanes-h;
     property <length> transport-y: root.lanes-y - root.transport-h;
 
