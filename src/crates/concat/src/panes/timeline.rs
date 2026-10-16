@@ -124,6 +124,60 @@ impl Default for TimelinePane {
     }
 }
 
+/// One sample of a pinch, as the lanes' gesture handler reports it.
+///
+/// `reported` is `ScaleRotateGestureHandler.scale`. That property starts
+/// at 1 and is multiplied by `(1 + delta)` on each move, and on a
+/// touchscreen `delta` is how much the ratio of the two fingers' distance
+/// changed, not a fraction of the scale. The ratio is therefore the sum of
+/// those deltas. `span` is that sum — 1 at the start of the pinch — and
+/// `seen` is the handler scale already added in.
+///
+/// The factor is the old ratio over the new one, which is what
+/// [`TimelinePane::zoom`] already applies for the lane chips: below 1 the
+/// fingers have spread and the cut zooms in (the chips' plus is `1/1.4`,
+/// one step of the same factor), above 1 they have closed and it zooms
+/// out. A sample that does not change the distance — a rotation reports
+/// the same scale — comes back with a factor of zero and the span and
+/// seen that were passed in, so the next sample still counts it.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PinchSample {
+    pub factor: f32,
+    pub span: f32,
+    pub seen: f32,
+}
+
+/// One step of a pinch: the zoom factor, and the span and seen the next
+/// sample has to start from.
+pub fn pinch_step(span: f32, seen: f32, reported: f32) -> PinchSample {
+    let keep = PinchSample {
+        factor: 0.0,
+        span,
+        seen,
+    };
+    if !(span.is_finite() && seen.is_finite() && reported.is_finite()) {
+        return keep;
+    }
+    if span <= 0.0 || seen <= 0.0 || reported <= 0.0 {
+        return keep;
+    }
+    let next = span + (reported / seen - 1.0);
+    if !(next.is_finite() && next > 0.0) {
+        return keep;
+    }
+    let factor = span / next;
+    // A hair under a millionth is a rotation's extra sample, or noise. Left
+    // uncounted, it stays in the next sample instead of being dropped.
+    if !(factor.is_finite() && factor > 0.0) || (factor - 1.0).abs() < 1e-6 {
+        return keep;
+    }
+    PinchSample {
+        factor,
+        span: next,
+        seen: reported,
+    }
+}
+
 impl TimelinePane {
     /// Applies one message. The studio is the rest of the window; while
     /// this runs the studio's copy of the pane is a blank it must not read.
@@ -359,5 +413,66 @@ mod tests {
         view.zoom(0.0, 0.0);
         view.zoom(-2.0, 0.0);
         assert_eq!(view.seconds_per_pixel, before);
+    }
+
+    #[test]
+    fn a_pinch_matches_the_chips_and_undoes_the_compounded_scale() {
+        // Fingers spread to 1.4× their distance: one press of plus. The
+        // handler's scale equals the ratio on the first sample, because it
+        // starts at 1.
+        let spread = pinch_step(1.0, 1.0, ZOOM_STEP);
+        assert!(
+            (spread.factor - 1.0 / ZOOM_STEP).abs() < 1e-6,
+            "{}",
+            spread.factor
+        );
+        assert!((spread.span - ZOOM_STEP).abs() < 1e-6);
+        // Closing to 1/1.4 of the distance is one press of minus.
+        let closed = pinch_step(1.0, 1.0, 1.0 / ZOOM_STEP);
+        assert!(
+            (closed.factor - ZOOM_STEP).abs() < 1e-6,
+            "{}",
+            closed.factor
+        );
+
+        // The handler then compounds `(1 + delta)` while the touchscreen's
+        // delta is the change in the distance ratio. From 1.4× to 2× the
+        // distance, delta is 0.6 and the handler reports 1.4 × 1.6 = 2.24,
+        // not 2. The factor is still 1.4/2.
+        let further = pinch_step(spread.span, spread.seen, ZOOM_STEP * 1.6);
+        assert!(
+            (further.factor - ZOOM_STEP / 2.0).abs() < 1e-5,
+            "{}",
+            further.factor
+        );
+        assert!((further.span - 2.0).abs() < 1e-5);
+        assert!((further.seen - ZOOM_STEP * 1.6).abs() < 1e-5);
+
+        // A rotation reports the same scale, and a nonsense scale changes
+        // nothing — the span stays put so the next real sample still counts.
+        let same = pinch_step(further.span, further.seen, further.seen);
+        assert_eq!(same.factor, 0.0);
+        assert_eq!(same.span, further.span);
+        assert_eq!(same.seen, further.seen);
+        let junk = pinch_step(further.span, further.seen, f32::NAN);
+        assert_eq!(junk.factor, 0.0);
+        assert_eq!(junk.span, further.span);
+
+        // And the factor goes through the same zoom as the chip, about the
+        // playhead, and stops at the same limit.
+        let mut pinched = pane(400.0, 0.0, 0.05);
+        pinched.centred = true;
+        pinched.recentre(3.0);
+        pinched.zoom(spread.factor, 3.0);
+        pinched.recentre(3.0);
+        let mut chip = pane(400.0, 0.0, 0.05);
+        chip.centred = true;
+        chip.recentre(3.0);
+        chip.zoom(1.0 / ZOOM_STEP, 3.0);
+        chip.recentre(3.0);
+        assert!((pinched.seconds_per_pixel - chip.seconds_per_pixel).abs() < 1e-6);
+        assert!((pinched.scroll_left - chip.scroll_left).abs() < 1e-5);
+        pinched.zoom(1e-9, 3.0);
+        assert_eq!(pinched.seconds_per_pixel, ZOOM_IN_LIMIT);
     }
 }

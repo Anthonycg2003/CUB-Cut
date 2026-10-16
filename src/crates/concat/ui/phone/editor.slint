@@ -164,8 +164,9 @@ component Fact inherits HorizontalLayout {
     }
 }
 
-/// A round chip over the lanes: the zoom, since a finger cannot pinch
-/// here - Slint sees one finger at a time.
+/// A round chip over the lanes: one step of the zoom. A pinch on the
+/// lanes does the same thing as the fingers move; this is that step,
+/// for one finger.
 component LaneChip inherits Rectangle {
     in property <Glyph> glyph;
     in property <string> label;

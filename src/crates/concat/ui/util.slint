@@ -135,6 +135,26 @@ export global Payload {
     pure callback tab-index(text: string) -> int;
 }
 
+/// One sample of a pinch, reduced to the factor the lanes already zoom by.
+///
+/// `factor` is what `zoomed` takes. Zero means this sample did not change
+/// the distance — a rotation, or a number that was not a scale — and `span`
+/// and `seen` are then the ones that were passed in, so the next sample
+/// still counts it. Otherwise `span` is the finger-distance ratio so far
+/// and `seen` is the gesture scale already folded into it.
+export struct PinchStep {
+    factor: float,
+    span: float,
+    seen: float,
+}
+
+/// The pinch on the phone lanes. The arithmetic is in Rust, next to the
+/// zoom it feeds: Slint's gesture scale is not the finger-distance ratio,
+/// and the two have to be taken apart before the factor is honest.
+export global Pinch {
+    pure callback step(span: float, seen: float, reported: float) -> PinchStep;
+}
+
 export global Geom {
     // Point on a circle, in path (viewbox) units. Degrees run clockwise from
     // 3 o'clock, the SVG convention.

@@ -3,7 +3,7 @@
 
 import { Wave } from "../primitives/wave.slint";
 import { Theme } from "../theme/theme.slint";
-import { Fmt, Payload } from "../util.slint";
+import { Fmt, Payload, Pinch } from "../util.slint";
 import { Glyph, Icon } from "../icons.slint";
 import { ClipData, ClipKind, DropData, TimelineTool, TrackData } from "model.slint";
 import { ContextMenu, MenuItemData } from "../primitives/context-menu.slint";
@@ -568,6 +568,7 @@ component Clip inherits Rectangle {
                 self.origin-y = self.absolute-position.y + self.mouse-y;
                 self.travelled = false;
                 self.on-edge = root.edge-at >= 0;
+                self.down-finger = event.touch-finger-id;
                 root.pressed(event.modifiers.shift || event.modifiers.control
                     || event.modifiers.meta, root.edge-at);
             } else if (event.kind == PointerEventKind.up
@@ -576,7 +577,8 @@ component Clip inherits Rectangle {
                 // plain `else` would end the gesture the moment it began.
                 root.released();
                 if (event.kind == PointerEventKind.up && !self.travelled && !self.on-edge
-                    && root.tool == TimelineTool.select) {
+                    && root.tool == TimelineTool.select
+                    && (self.down-finger == 0 || event.touch-finger-id == self.down-finger)) {
                     root.clicked(self.mouse-x);
                 }
             }
@@ -605,6 +607,9 @@ component Clip inherits Rectangle {
         property <length> origin-y;
         property <bool> travelled;
         property <bool> on-edge;
+        /// The finger that pressed. A second finger releases this one with
+        /// the new finger's id, and that must not also be a click.
+        property <int> down-finger;
     }
 
     // ── the volume line ───────────────────────────────────────────────────
@@ -1062,7 +1067,8 @@ export component Lanes inherits Rectangle {
     /// are then one surface for one gesture - a drag along the cut scrubs,
     /// the lanes sliding under a playhead Rust holds at their middle, and a
     /// drag down the stack scrolls it - and a tap on an empty lane clears
-    /// the selection, as an empty band does. No band is drawn: there is no
+    /// the selection, as an empty band does. A second finger pinches, and
+    /// that zoom is the chips' zoom. No band is drawn: there is no
     /// modifier to add with and no pointer to aim a marquee by. Off, the
     /// floor draws a band and the ruler scrubs where it is pressed, as on
     /// a desk.
@@ -1179,13 +1185,23 @@ export component Lanes inherits Rectangle {
     property <length> finger-x;
     property <length> finger-y;
     property <length> finger-last-y;
+    /// The finger that went down. A second finger is delivered as a release
+    /// of this one, but the id on that release is the new finger's — that
+    /// is a pinch starting, not a tap.
+    property <int> finger-id;
 
-    function finger-down(x: length, y: length) {
+    function finger-down(x: length, y: length, id: int) {
         root.finger-axis = 0;
         root.finger-playhead = root.playhead;
         root.finger-x = x;
         root.finger-y = y;
         root.finger-last-y = y;
+        root.finger-id = id;
+    }
+    /// True when `id` is the finger that went down. A mouse is id 0, and so
+    /// is a release that never recorded a press; both are real lifts.
+    function finger-own-lift(id: int) -> bool {
+        return root.finger-id == 0 || id == root.finger-id;
     }
     /// The finger is at (`x`, `y`) now. `down-too` allows the vertical
     /// job: the floor scrolls the stack, the ruler does not.
@@ -1375,7 +1391,7 @@ export component Lanes inherits Rectangle {
                     self.to-x = self.mouse-x;
                     self.to-y = self.mouse-y;
                     if (root.finger) {
-                        root.finger-down(self.mouse-x, self.mouse-y);
+                        root.finger-down(self.mouse-x, self.mouse-y, event.touch-finger-id);
                     } else {
                         self.drawing = true;
                     }
@@ -1399,7 +1415,8 @@ export component Lanes inherits Rectangle {
                             root.stack-y(Math.max(self.from-y, self.to-y)),
                             self.additive);
                     } else if (root.finger && root.finger-axis == 0
-                        && event.kind == PointerEventKind.up) {
+                        && event.kind == PointerEventKind.up
+                        && root.finger-own-lift(event.touch-finger-id)) {
                         // A tap on an empty lane: the playhead goes there,
                         // and the empty band a press that never moved would
                         // have closed clears the selection.
@@ -1667,9 +1684,10 @@ export component Lanes inherits Rectangle {
                         // The ruler slides with the lanes under a finger;
                         // a tap on it goes to the instant tapped.
                         if (event.kind == PointerEventKind.down) {
-                            root.finger-down(self.mouse-x, self.mouse-y);
+                            root.finger-down(self.mouse-x, self.mouse-y, event.touch-finger-id);
                         } else if (event.kind == PointerEventKind.up
-                            && root.finger-axis == 0) {
+                            && root.finger-axis == 0
+                            && root.finger-own-lift(event.touch-finger-id)) {
                             root.scrubbed(Math.max(0, root.seconds-at(self.mouse-x)));
                         }
                         return;
@@ -1729,11 +1747,18 @@ export component Lanes inherits Rectangle {
                             root.seconds-at(root.at(mark) + self.mouse-x - self.pressed-x));
                     }
                 }
+                property <int> down-finger;
+
                 pointer-event(event) => {
+                    if (event.kind == PointerEventKind.down) {
+                        self.down-finger = event.touch-finger-id;
+                    }
                     if (event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel) {
                         if (self.dragging && Math.abs(self.drag-to - mark) > 0.0005) {
                             root.key-mark-moved(mark, self.drag-to);
-                        } else if (event.kind == PointerEventKind.up) {
+                        } else if (event.kind == PointerEventKind.up
+                            && (self.down-finger == 0
+                                || event.touch-finger-id == self.down-finger)) {
                             root.scrubbed(mark);
                         }
                         self.dragging = false;
@@ -1851,6 +1876,48 @@ export component Lanes inherits Rectangle {
                 if (event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel) {
                     last-x = 0px;
                 }
+            }
+        }
+
+        // A pinch, and only while a finger drives the lanes. Slint's touch
+        // area is one pointer, so a second finger is not a second press: once
+        // the two have moved, the window reports a pinch gesture, and this is
+        // what receives it. The distance ratio is the same zoom the chips
+        // send, about the playhead. One finger is not a pinch and falls
+        // through to the scrub and the stack scroll underneath. Declared
+        // last, so it is asked first; a press it does not take reaches the
+        // lane it landed on.
+        if root.finger: pinch := ScaleRotateGestureHandler {
+            x: 0;
+            y: 0;
+            width: parent.width;
+            height: parent.height;
+
+            // The finger-distance ratio so far, and the gesture scale already
+            // counted. Both start at 1 with the gesture. `Pinch.step` is what
+            // turns the handler's scale back into that ratio.
+            property <float> span: 1;
+            property <float> seen: 1;
+
+            started => {
+                self.span = 1;
+                self.seen = 1;
+            }
+            updated => {
+                let step = Pinch.step(self.span, self.seen, self.scale);
+                self.span = step.span;
+                self.seen = step.seen;
+                if (step.factor > 0) {
+                    root.zoomed(step.factor, root.playhead);
+                }
+            }
+            ended => {
+                self.span = 1;
+                self.seen = 1;
+            }
+            cancelled => {
+                self.span = 1;
+                self.seen = 1;
             }
         }
 

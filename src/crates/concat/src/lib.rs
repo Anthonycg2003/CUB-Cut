@@ -1752,6 +1752,17 @@ fn start(project: Option<std::path::PathBuf>, smoke: bool) -> Result<(), slint::
         .on_color_of(|text, fallback| format::parse_colour(text.as_str()).unwrap_or(fallback));
     app.global::<Fmt>()
         .on_parse_frames(|text, rate| format::parse_frames(text.as_str(), rate));
+    // A phone pinch. The handler's scale is not the finger-distance ratio;
+    // `pinch_step` is, and the lanes zoom by the factor it returns — the
+    // same one the chips use, about the playhead.
+    app.global::<Pinch>().on_step(|span, seen, reported| {
+        let sample = panes::timeline::pinch_step(span, seen, reported);
+        PinchStep {
+            factor: sample.factor,
+            span: sample.span,
+            seen: sample.seen,
+        }
+    });
 
     // The drag payloads: plain text, because a drag that says "media:12" is
     // one that can be read in a log.
