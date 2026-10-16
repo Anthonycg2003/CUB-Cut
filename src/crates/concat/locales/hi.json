@@ -551,6 +551,8 @@
   "export.browse": "ब्राउज़ करें",
   "export.cancelExport": "एक्सपोर्ट रद्द करें",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "कोडेक",
   "export.colour": "रंग",
   "export.contents": "सामग्री",

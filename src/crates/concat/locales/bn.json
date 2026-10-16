@@ -551,6 +551,8 @@
   "export.browse": "ব্রাউজ করুন",
   "export.cancelExport": "এক্সপোর্ট বাতিল করুন",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "কোডেক",
   "export.colour": "রঙ",
   "export.contents": "বিষয়বস্তু",

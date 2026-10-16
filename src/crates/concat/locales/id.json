@@ -551,6 +551,8 @@
   "export.browse": "Telusuri",
   "export.cancelExport": "Batalkan ekspor",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "Kodek",
   "export.colour": "Warna",
   "export.contents": "Isi",

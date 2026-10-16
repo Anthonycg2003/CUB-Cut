@@ -551,6 +551,8 @@
   "export.browse": "Огляд",
   "export.cancelExport": "Скасувати експорт",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "Кодек",
   "export.colour": "Колір",
   "export.contents": "Вміст",

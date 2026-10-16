@@ -551,6 +551,8 @@
   "export.browse": "Duyệt…",
   "export.cancelExport": "Hủy xuất",
   "export.cbr": "CBR (tốc độ bit cố định)",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "Bộ mã hóa",
   "export.colour": "Màu sắc",
   "export.contents": "Nội dung",

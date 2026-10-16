@@ -551,6 +551,8 @@
   "export.browse": "Gözat",
   "export.cancelExport": "Dışa aktarmayı iptal et",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "Kodek",
   "export.colour": "Renk",
   "export.contents": "İçerik",

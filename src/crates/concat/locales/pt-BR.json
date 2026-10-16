@@ -551,6 +551,8 @@
   "export.browse": "Procurar",
   "export.cancelExport": "Cancelar exportação",
   "export.cbr": "CBR",
+  "export.clips": "{0} clips",
+  "export.clipsAndTitles": "{0} clips · {1} titles",
   "export.codec": "Codec",
   "export.colour": "Cor",
   "export.contents": "Conteúdo",
